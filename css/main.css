@@ -1,0 +1,82 @@
+body{
+  overflow-x: hidden;
+  background-color: skyblue;
+}
+.imgcontainer{
+  background: url("../img/pills.jpg");
+  background-repeat: no-repeat;
+  background-size: 100%;
+  color: whitesmoke;
+  padding: 130px 0;
+}
+
+.infobar{
+  background: url("../img/pills.jpg");
+  background-repeat: no-repeat;
+  background-size: 100%;
+  color: whitesmoke;
+  padding: 10px 0;
+}
+.infobar h2{
+  color: whitesmoke;
+}
+
+.main_r{
+  background-color: whitesmoke;
+  width: 90%;
+  padding: 5% 5%;
+}
+
+.card {
+  padding: 20px;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  margin: auto;
+  text-align: center;
+  font-family: arial;
+  width: 400px;
+}
+
+.price {
+  color: grey;
+  font-size: 22px;
+}
+
+.card a {
+  border: none;
+  outline: 0;
+  padding: 12px;
+  color: white;
+  background-color: #000;
+  text-align: center;
+  cursor: pointer;
+  width: 100%;
+  font-size: 18px;
+}
+
+.card a:hover {
+  opacity: 0.7;
+}
+img {
+  float: left;
+  width:  100px;
+  height: 250px;
+  object-fit: cover;
+}
+
+@media screen and (min-width: 620px) {
+  .imgcontainer {
+    font-size: 30px;
+  }
+  .card {
+    width: 300px
+  }
+}
+@media screen and (max-width: 619px) {
+  .imgcontainer {
+    font-size: 15px;
+  }
+  .card {
+    align-content: center;
+    width: 200px;
+  }
+}

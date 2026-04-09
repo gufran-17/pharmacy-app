@@ -1,0 +1,33 @@
+# 🔐 Sensitive
+*.pem
+.env
+.env.*
+
+# 🧠 Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# 🐳 Docker
+*.log
+
+# 🐘 PHP
+vendor/
+
+# 🧱 Node
+node_modules/
+
+# 🗂 Logs
+logs/
+*.log
+
+# 🖥 OS
+.DS_Store
+Thumbs.db
+
+# 🔥 Ansible
+*.retry
+
+# ❌ Optional (big file)
+dump.sql

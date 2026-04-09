@@ -1,0 +1,59 @@
+body{
+  overflow-x: hidden;
+  height: 100%;
+}
+.main-content{
+  background-color: white;
+  padding: 3% 10%;
+}
+.col-2{
+  padding: 3% 0;
+  background-color: grey;
+  text-align: center;
+}
+.tbl-full{
+  width: 100%;
+}
+.tbl-30{
+  width: 30%;
+}
+.tbl-35{
+  width: 35%;
+}
+.tbl-45{
+  width: 45%;
+}
+table tr th{
+  border-bottom: 1px solid black;
+  padding: 1% 2%;
+  text-align: left;
+}
+table tr td{
+  padding: 1% 2%;
+}
+.green-msg{
+  background-color: lightgreen;
+  color: green;
+}
+.red-msg{
+  background-color: rgb(233, 168, 168);
+  color: red;
+
+}
+
+/* fix footer */
+#page-container {
+  position: relative;
+  min-height: 100vh;
+}
+
+#content-wrap {
+  padding-bottom: 10rem;    
+}
+
+#footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 10rem;           
+}

@@ -1,0 +1,15 @@
+body{
+  overflow-x: hidden;
+  overflow-y: hidden;
+  height: 100%;
+  background-image: url("../img/medicines-and-medical-supplies-seamless-pattern.jpg");
+}
+/* login page */
+.login{
+  background-color: lightgrey;
+  border: 5px solid black;
+  width: 30%;
+  text-align: center;
+  margin: 10% auto;
+  padding: 1%;
+}
