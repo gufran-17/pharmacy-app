@@ -3,10 +3,11 @@ kind: Service
 metadata:
   name: pharmacy-service
 spec:
-  type: LoadBalancer
+  type: NodePort   # 🔥 change here
   selector:
     app: pharmacy
   ports:
     - protocol: TCP
       port: 80
       targetPort: 80
+      nodePort: 30007   # 🔥 fixed port
