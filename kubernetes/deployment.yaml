@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pharmacy-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pharmacy
+  template:
+    metadata:
+      labels:
+        app: pharmacy
+    spec:
+      containers:
+      - name: pharmacy
+        image: 062000001375.dkr.ecr.ap-south-1.amazonaws.com/pharmacy-app-repo:v1
+        ports:
+        - containerPort: 80
+        env:
+        - name: DB_HOST
+          value: "pharmacy-db.c7qim6s6ogkd.ap-south-1.rds.amazonaws.com"
+        - name: DB_USER
+          value: "admin"
+        - name: DB_PASS
+          value: "gufran2003"
+        - name: DB_NAME
+          value: "pharmacy_mgmt"

@@ -1,0 +1,8 @@
+.git
+terraform/
+ansible/
+kubernetes/
+dump.sql
+*.pem
+README.md
+logs
