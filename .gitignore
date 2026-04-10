@@ -31,3 +31,6 @@ Thumbs.db
 
 # ❌ Optional (big file)
 dump.sql
+
+
+terraform/EKS/awscliv2.zip
