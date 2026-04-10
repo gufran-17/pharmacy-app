@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     triggers {
-        pollSCM('* * * * *')   // 🔥 every 1 min check karega
+        pollSCM('* * * * *')
     }
 
     environment {
@@ -65,9 +65,9 @@ pipeline {
         stage('Deploy to EKS') {
             steps {
                 sh '''
-                sed -i "s|image:.*|image: $ECR_REPO:$IMAGE_TAG|g" deployment.yaml
-                kubectl apply -f deployment.yaml
-                kubectl apply -f service.yaml
+                sed -i "s|image:.*|image: $ECR_REPO:$IMAGE_TAG|g" kubernetes/deployment.yaml
+                kubectl apply -f kubernetes/deployment.yaml
+                kubectl apply -f kubernetes/service.yaml
                 '''
             }
         }
