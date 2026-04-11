@@ -22,22 +22,38 @@ kind: Deployment
 metadata:
   name: pharmacy-app
   namespace: pharmacy
+  labels:
+    app: pharmacy-app
 spec:
   replicas: 1
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0   # 🔥 old pod tab tak delete nahi hoga jab tak new ready nahi
+
   selector:
     matchLabels:
-      app: pharmacy
+      app: pharmacy-app
+
   template:
     metadata:
       labels:
-        app: pharmacy
+        app: pharmacy-app
+
     spec:
       containers:
       - name: pharmacy
-        image: 062000001375.dkr.ecr.ap-south-1.amazonaws.com/pharmacy-app-repo:latest
+
+        # 🔥 IMPORTANT — Jenkins isko override karega
+        image: PLACEHOLDER
+
         imagePullPolicy: Always
+
         ports:
         - containerPort: 80
+
         env:
         - name: DB_HOST
           valueFrom:
@@ -59,13 +75,19 @@ spec:
             secretKeyRef:
               name: pharmacy-db-secret
               key: DB_NAME
+
+        # 🔥 health checks (pipeline fail fix)
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 6
+
         livenessProbe:
           httpGet:
             path: /
             port: 80
           initialDelaySeconds: 30
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 80
-          initialDelaySeconds: 15
+          periodSeconds: 10
