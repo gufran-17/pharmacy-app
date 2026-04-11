@@ -1,51 +1,12 @@
-# ════════════════════════════════════════════════════════
-# OPTION A — LoadBalancer (RECOMMENDED)
-# Gives you a proper stable URL automatically.
-# AWS creates an ELB. You access via the ELB DNS name.
-# URL looks like: http://abc123.ap-south-1.elb.amazonaws.com
-# ════════════════════════════════════════════════════════
 apiVersion: v1
 kind: Service
 metadata:
   name: pharmacy-service
-  namespace: pharmacy          # ← MUST match deployment namespace
-  annotations:
-    # Use Network Load Balancer (faster, more reliable than Classic)
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+  namespace: pharmacy
 spec:
   type: LoadBalancer
   selector:
-    app: pharmacy              # ← MUST match deployment labels
+    app: pharmacy
   ports:
-  - protocol: TCP
-    port: 80                   # External: users hit port 80
-    targetPort: 80             # Internal: your container listens on 80
-
-# ════════════════════════════════════════════════════════
-# OPTION B — NodePort (if LoadBalancer EXTERNAL-IP stays "pending")
-# You access via: http://<EC2-NODE-PUBLIC-IP>:30007
-# ════════════════════════════════════════════════════════
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: pharmacy-service
-#   namespace: pharmacy
-# spec:
-#   type: NodePort
-#   selector:
-#     app: pharmacy
-#   ports:
-#   - protocol: TCP
-#     port: 80
-#     targetPort: 80
-#     nodePort: 30007
-#
-# IMPORTANT for NodePort to work:
-# You must also open port 30007 on the EC2 node's security group.
-# Run this command first:
-#   SG=$(aws ec2 describe-instances \
-#     --filters "Name=tag:eks:cluster-name,Values=pharmacy-eks" \
-#     --query "Reservations[0].Instances[0].SecurityGroups[0].GroupId" \
-#     --output text)
-#   aws ec2 authorize-security-group-ingress \
-#     --group-id $SG --protocol tcp --port 30007 --cidr 0.0.0.0/0
+  - port: 80
+    targetPort: 80

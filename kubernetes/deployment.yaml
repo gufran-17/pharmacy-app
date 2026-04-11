@@ -1,35 +1,9 @@
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: pharmacy-app
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: pharmacy
-  template:
-    metadata:
-      labels:
-        app: pharmacy
-    spec:
-      containers:
-      - name: pharmacy
-        image: 062000001375.dkr.ecr.ap-south-1.amazonaws.com/pharmacy-app-repo:v1
-        ports:
-        - containerPort: 80
-        env:# ─────────────────────────────────────────────────
-# STEP 1: Create namespace first
-# ─────────────────────────────────────────────────
 apiVersion: v1
 kind: Namespace
 metadata:
   name: pharmacy
 
 ---
-# ─────────────────────────────────────────────────
-# STEP 2: Store DB credentials in a Secret
-# NEVER put passwords in plain text in Deployment YAML
-# ─────────────────────────────────────────────────
 apiVersion: v1
 kind: Secret
 metadata:
@@ -43,16 +17,11 @@ stringData:
   DB_NAME: "pharmacy_mgmt"
 
 ---
-# ─────────────────────────────────────────────────
-# STEP 3: Deployment — your exact image, fixed up
-# ─────────────────────────────────────────────────
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: pharmacy-app
-  namespace: pharmacy          # ← ADDED: must match service namespace
-  labels:
-    app: pharmacy
+  namespace: pharmacy
 spec:
   replicas: 1
   selector:
@@ -65,12 +34,10 @@ spec:
     spec:
       containers:
       - name: pharmacy
-        image: 062000001375.dkr.ecr.ap-south-1.amazonaws.com/pharmacy-app-repo:v1
-        imagePullPolicy: Always  # ← Always pull latest image on redeploy
+        image: 062000001375.dkr.ecr.ap-south-1.amazonaws.com/pharmacy-app-repo:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
-
-        # ── Pull credentials from Secret, not plain text ──
         env:
         - name: DB_HOST
           valueFrom:
@@ -92,37 +59,13 @@ spec:
             secretKeyRef:
               name: pharmacy-db-secret
               key: DB_NAME
-
-        # ── Health checks: Kubernetes restarts pod if app crashes ──
         livenessProbe:
           httpGet:
             path: /
             port: 80
-          initialDelaySeconds: 30   # Wait 30s before first check (PHP needs boot time)
-          periodSeconds: 10
-          failureThreshold: 3
-
+          initialDelaySeconds: 30
         readinessProbe:
           httpGet:
             path: /
             port: 80
           initialDelaySeconds: 15
-          periodSeconds: 5
-
-        # ── Resource limits (t3.medium has 2 CPU, 4GB RAM) ──
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-
-        - name: DB_HOST
-          value: "pharmacy-db.c7qim6s6ogkd.ap-south-1.rds.amazonaws.com"
-        - name: DB_USER
-          value: "admin"
-        - name: DB_PASS
-          value: "gufran2003"
-        - name: DB_NAME
-          value: "pharmacy_mgmt"
