@@ -1,7 +1,3 @@
-# kubernetes/deployment.yaml
-# Contains ONLY: Namespace + Deployment
-# Secret is created manually via CLI — never in Git
-
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -26,12 +22,12 @@ spec:
 
   selector:
     matchLabels:
-      app: pharmacy-app        # ← locked forever after first apply
+      app: pharmacy-app
 
   template:
     metadata:
       labels:
-        app: pharmacy-app      # ← must match selector above exactly
+        app: pharmacy-app
 
     spec:
       containers:
@@ -40,6 +36,15 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 80
+
+        # FIX: Memory limits prevent OOM kill (Exit Code 137)
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
 
         env:
         - name: DB_HOST
@@ -63,17 +68,21 @@ spec:
               name: pharmacy-db-secret
               key: DB_NAME
 
+        # FIX: Use healthcheck.php — no DB, always fast, always 200
         readinessProbe:
           httpGet:
-            path: /
+            path: /healthcheck.php
             port: 80
-          initialDelaySeconds: 10
+          initialDelaySeconds: 15   # give Apache time to fully start
           periodSeconds: 5
           failureThreshold: 6
+          timeoutSeconds: 3         # was 1s — too tight for any real response
 
         livenessProbe:
           httpGet:
-            path: /
+            path: /healthcheck.php
             port: 80
           initialDelaySeconds: 30
           periodSeconds: 10
+          failureThreshold: 3
+          timeoutSeconds: 3
