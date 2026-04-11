@@ -26,12 +26,32 @@ data "aws_subnet" "subnet_2" {
 }
 
 # ---------------------------
-# Fetch Existing EC2 Security Group
+# Fetch Existing EC2 SG
 # ---------------------------
 data "aws_security_group" "ec2_sg" {
   filter {
     name   = "group-name"
     values = ["pharmacy-sg"]
+  }
+}
+
+# ---------------------------
+# Fetch EKS Node SG
+# ---------------------------
+data "aws_security_group" "eks_node_sg" {
+  filter {
+    name   = "group-name"
+    values = ["eks-node-sg"]
+  }
+}
+
+# ---------------------------
+# 🔥 Fetch EXISTING RDS SG (IMPORTANT)
+# ---------------------------
+data "aws_security_group" "rds_existing_sg" {
+  filter {
+    name   = "group-name"
+    values = ["pharmacy-rds-sg"]
   }
 }
 
@@ -52,38 +72,25 @@ resource "aws_db_subnet_group" "pharmacy_db_subnet_group" {
 }
 
 # ---------------------------
-# RDS Security Group
+# 🔥 ADD RULE: EKS → RDS
 # ---------------------------
-resource "aws_security_group" "rds_sg" {
-  name        = "pharmacy-rds-sg"
-  description = "Allow MySQL from EC2"
-  vpc_id      = data.aws_vpc.existing_vpc.id
-
-  ingress {
-    from_port       = 3306
-    to_port         = 3306
-    protocol        = "tcp"
-
-    security_groups = [data.aws_security_group.ec2_sg.id]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+resource "aws_security_group_rule" "allow_eks_to_rds" {
+  type                     = "ingress"
+  from_port                = 3306
+  to_port                  = 3306
+  protocol                 = "tcp"
+  security_group_id        = data.aws_security_group.rds_existing_sg.id
+  source_security_group_id = data.aws_security_group.eks_node_sg.id
 }
 
 # ---------------------------
-# RDS Instance
+# RDS Instance (NO CHANGE)
 # ---------------------------
 resource "aws_db_instance" "pharmacy_db" {
   identifier = "pharmacy-db"
 
   engine         = "mysql"
   instance_class = "db.t3.micro"
-
   allocated_storage = 20
 
   db_name  = "pharmacy_mgmt"
@@ -93,7 +100,7 @@ resource "aws_db_instance" "pharmacy_db" {
   publicly_accessible = false
   multi_az            = false
 
-  vpc_security_group_ids = [aws_security_group.rds_sg.id]
+  vpc_security_group_ids = [data.aws_security_group.rds_existing_sg.id]
   db_subnet_group_name   = aws_db_subnet_group.pharmacy_db_subnet_group.name
 
   skip_final_snapshot = true
