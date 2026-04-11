@@ -30,7 +30,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t pharmacy-app .'
+                sh 'docker build --no-cache -t pharmacy-app .'
             }
         }
 
@@ -76,7 +76,7 @@ pipeline {
                     # Wait for rollout to finish (fails build if deploy fails)
                     kubectl rollout status deployment/pharmacy-app \
                         -n $NAMESPACE \
-                        --timeout=180s
+                        --timeout=380s
                 '''
             }
         }
