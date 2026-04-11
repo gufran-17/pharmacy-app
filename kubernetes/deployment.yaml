@@ -1,20 +1,11 @@
+# kubernetes/deployment.yaml
+# Contains ONLY: Namespace + Deployment
+# Secret is created manually via CLI — never in Git
+
 apiVersion: v1
 kind: Namespace
 metadata:
   name: pharmacy
-
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: pharmacy-db-secret
-  namespace: pharmacy
-type: Opaque
-stringData:
-  DB_HOST: "pharmacy-db.c7qim6s6ogkd.ap-south-1.rds.amazonaws.com"
-  DB_USER: "admin"
-  DB_PASS: "gufran2003"
-  DB_NAME: "pharmacy_mgmt"
 
 ---
 apiVersion: apps/v1
@@ -31,26 +22,22 @@ spec:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1
-      maxUnavailable: 0   # 🔥 old pod tab tak delete nahi hoga jab tak new ready nahi
+      maxUnavailable: 0
 
   selector:
     matchLabels:
-      app: pharmacy-app
+      app: pharmacy-app        # ← locked forever after first apply
 
   template:
     metadata:
       labels:
-        app: pharmacy-app
+        app: pharmacy-app      # ← must match selector above exactly
 
     spec:
       containers:
       - name: pharmacy
-
-        # 🔥 IMPORTANT — Jenkins isko override karega
         image: PLACEHOLDER
-
         imagePullPolicy: Always
-
         ports:
         - containerPort: 80
 
@@ -76,7 +63,6 @@ spec:
               name: pharmacy-db-secret
               key: DB_NAME
 
-        # 🔥 health checks (pipeline fail fix)
         readinessProbe:
           httpGet:
             path: /
