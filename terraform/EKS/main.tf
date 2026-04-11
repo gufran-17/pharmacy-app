@@ -1,17 +1,16 @@
-# ---------------------------
-# EKS CLUSTER ROLE
-# ---------------------------
+provider "aws" {
+  region = "ap-south-1"
+}
+
 resource "aws_iam_role" "eks_cluster_role" {
   name = "eks-cluster-role-final"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
-      Principal = {
-        Service = "eks.amazonaws.com"
-      }
-      Action = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "eks.amazonaws.com" }
+      Action    = "sts:AssumeRole"
     }]
   })
 }
@@ -21,15 +20,16 @@ resource "aws_iam_role_policy_attachment" "eks_cluster_policy" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
-# ---------------------------
-# EKS CLUSTER
-# ---------------------------
 resource "aws_eks_cluster" "eks" {
   name     = var.cluster_name
   role_arn = aws_iam_role.eks_cluster_role.arn
 
   vpc_config {
-    subnet_ids = var.subnet_ids
+    subnet_ids         = var.subnet_ids
+    security_group_ids = [aws_security_group.eks_cluster_sg.id]
+
+    endpoint_public_access  = true
+    endpoint_private_access = true
   }
 
   depends_on = [
@@ -37,20 +37,16 @@ resource "aws_eks_cluster" "eks" {
   ]
 }
 
-# ---------------------------
 # NODE ROLE
-# ---------------------------
 resource "aws_iam_role" "node_role" {
   name = "eks-node-role-final"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-      Action = "sts:AssumeRole"
+      Effect    = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+      Action    = "sts:AssumeRole"
     }]
   })
 }
@@ -70,38 +66,37 @@ resource "aws_iam_role_policy_attachment" "node_cni" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
 }
 
-# ---------------------------
 # NODE GROUP
-# ---------------------------
 resource "aws_eks_node_group" "nodes" {
   cluster_name    = aws_eks_cluster.eks.name
   node_group_name = "pharmacy-nodes"
   node_role_arn   = aws_iam_role.node_role.arn
+  subnet_ids      = var.subnet_ids
 
-  subnet_ids = var.subnet_ids
+  instance_types = ["t3.medium"]
+  disk_size      = 20
 
   scaling_config {
     desired_size = 1
-    max_size     = 1
+    max_size     = 3
     min_size     = 1
   }
 
-  instance_types = ["t3.medium"]
+  update_config {
+    max_unavailable = 1
+  }
+
+  # remote_access block REMOVED — it requires ec2_ssh_key if used
+  # Your node SG rules still apply via the cluster SG references above
 
   depends_on = [
     aws_iam_role_policy_attachment.node_worker,
     aws_iam_role_policy_attachment.node_ecr,
-    aws_iam_role_policy_attachment.node_cni
+    aws_iam_role_policy_attachment.node_cni,
+    aws_eks_cluster.eks,
   ]
-}
 
-
-resource "aws_security_group_rule" "allow_nodeport" {
-  type              = "ingress"
-  from_port         = 30000
-  to_port           = 32767
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-
-  security_group_id = aws_eks_node_group.pharmacy_nodes.resources[0].remote_access_security_group_id
+  tags = {
+    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+  }
 }
