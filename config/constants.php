@@ -3,7 +3,7 @@ ob_start();
 session_start();
 
 // 🔥 Change this later to your domain / load balancer URL
-define('SITEURL', 'http://a4e9b48f961974be68de616cda6bd5aa-909998617.ap-south-1.elb.amazonaws.com/');
+define('SITEURL', 'http://a07e50217c9c0430599be724d3d7a805-1aac2c210db3cbfc.elb.ap-south-1.amazonaws.com/');
 
 // 🔥 ENV VARIABLES (safe + production ready)
 $db_host = getenv('DB_HOST') ?: 'pharmacy-db.c7qim6s6ogkd.ap-south-1.rds.amazonaws.com';
