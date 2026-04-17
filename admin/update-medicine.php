@@ -1,5 +1,5 @@
 <?php
-include("../partials/header.php");
+include("../partials/navbar.php");
 
 // ---------- LOAD EXISTING MEDICINE ----------
 if (!isset($_GET['id'])) {

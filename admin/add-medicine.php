@@ -1,5 +1,5 @@
 <?php
-include("../partials/header.php");
+include("../partials/navbar.php");
 
 // Load categories for dropdown
 $sql_cats = "SELECT id, title FROM tbl_category WHERE active='Yes' ORDER BY title ASC";

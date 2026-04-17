@@ -1,5 +1,5 @@
 <?php
-include("../partials/header.php");
+include("../partials/navbar.php");
 
 if (!isset($_POST['id'])) {
     header('location: ' . SITEURL . 'admin/medicines.php');

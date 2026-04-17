@@ -1,5 +1,5 @@
 <?php
-include("../partials/header.php");
+include("../partials/navbar.php");
 
 // ---------- LOAD EXISTING CATEGORY ----------
 if (!isset($_GET['id'])) {

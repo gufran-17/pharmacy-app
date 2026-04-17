@@ -1,5 +1,5 @@
 <?php
-include("../partials/header.php");
+include("../partials/navbar.php");
 
 // Only process if form is submitted
 if (isset($_POST['submit'])) {
