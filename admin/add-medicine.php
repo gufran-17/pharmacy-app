@@ -1,5 +1,6 @@
 <?php
-include("../partials/navbar.php");
+include("./partials/login-check.php");
+include("./partials/navbar.php");
 
 // Load categories for dropdown
 $sql_cats = "SELECT id, title FROM tbl_category WHERE active='Yes' ORDER BY title ASC";
@@ -156,4 +157,4 @@ if (isset($_POST['submit'])) {
     </form>
 </div>
 
-<?php include("../partials/footer.php"); ?>
+<?php include("./partials/footer.php"); ?>

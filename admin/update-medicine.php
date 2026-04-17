@@ -1,5 +1,6 @@
 <?php
-include("../partials/navbar.php");
+include("./partials/login-check.php");
+include("./partials/navbar.php");
 
 // ---------- LOAD EXISTING MEDICINE ----------
 if (!isset($_GET['id'])) {
@@ -216,4 +217,4 @@ if (isset($_POST['submit'])) {
     </form>
 </div>
 
-<?php include("../partials/footer.php"); ?>
+<?php include("./partials/footer.php"); ?>

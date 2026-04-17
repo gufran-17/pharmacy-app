@@ -1,5 +1,6 @@
 <?php
-include("../partials/navbar.php");
+include("./partials/login-check.php");
+include("./partials/navbar.php");
 
 // Only process if form is submitted
 if (isset($_POST['submit'])) {
@@ -133,4 +134,4 @@ if (isset($_POST['submit'])) {
     </form>
 </div>
 
-<?php include("../partials/footer.php"); ?>
+<?php include("./partials/footer.php"); ?>

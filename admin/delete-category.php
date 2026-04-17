@@ -1,5 +1,6 @@
 <?php
-include("../partials/navbar.php");
+include("./partials/login-check.php");
+include("./partials/navbar.php");
 
 if (!isset($_POST['id'])) {
     header('location: ' . SITEURL . 'admin/categories.php');
