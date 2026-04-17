@@ -77,13 +77,13 @@
         <fieldset>
           <legend>Delivery Details</legend>
           <div class="order-label">Full Name</div>
-          <input type="text" name="full-name" placeholder="E.g. Bhumika Joshi" class="input-responsive" required>
+          <input type="text" name="full-name" placeholder="E.g. Gufran Ansari" class="input-responsive" required>
 
           <div class="order-label">Phone Number</div>
-          <input type="tel" name="contact" placeholder="E.g. 9843xxxxxx" class="input-responsive" required>
+          <input type="tel" name="contact" placeholder="E.g. 9860xxxxxx" class="input-responsive" required>
 
           <div class="order-label">Email</div>
-          <input type="email" name="email" placeholder="E.g. hi@abc.com" class="input-responsive" required>
+          <input type="email" name="email" placeholder="E.g. hi@gmail.com" class="input-responsive" required>
 
           <div class="order-label">Address</div>
           <textarea name="address" rows="10" placeholder="E.g. Street, City, Country" class="input-responsive"required></textarea>

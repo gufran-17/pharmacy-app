@@ -1,169 +1,159 @@
-<?php include("./partials/navbar.php"); ?>
-
-<div class="red-msg">
-  <?php
-  if (isset($_SESSION['add'])) {
-    echo $_SESSION['add'];
-    unset($_SESSION['add']);
-  }
-  ?>
-</div>
-
-<div class="red-msg">
-  <?php
-  if (isset($_SESSION['upload'])) {
-    echo $_SESSION['upload'];
-    unset($_SESSION['upload']);
-  }
-  ?>
-</div>
-
-<div class="main-content">
-  <center>
-    <h2>Add Medicine</h2>
-  </center>
-  <form action="" method="POST" enctype="multipart/form-data">
-    <table class="tbl-45">
-      <tr>
-        <td>Title: </td>
-        <td><input type="text" name="title" placeholder="Enter Title"></td>
-      </tr>
-      <tr>
-        <td>Description: </td>
-        <td>
-          <textarea name="description" cols="30" rows="5" placeholder="Enter Description"></textarea>
-        </td>
-      </tr>
-      <tr>
-        <td>Price: </td>
-        <td><input type="number" name="price" placeholder="Enter Price"></td>
-      </tr>
-      <tr>
-        <td>Category: </td>
-        <td>
-          <select name="category">
-            <?php
-              $sql = "SELECT * FROM tbl_category WHERE active='Yes'";
-              $res = mysqli_query($conn, $sql);
-              $count = mysqli_num_rows($res);
-              if ($count > 0) {
-                while ($row = mysqli_fetch_assoc($res))
-                {
-                  $id = $row['id'];
-                  $title = $row['title'];
-                  ?>
-                  <option value="<?php echo $id ?>"><?php echo $title ?></option>
-                  <?php
-                }
-              }
-              else{
-                ?>
-                <option value="0">No category Found</option>
-                <?php
-              }
-            ?>
-          </select>
-        </td>
-      </tr>
-      <tr>
-        <td>Select Image:</td>
-        <td><input type="file" name="image"></td>
-      </tr>
-      <tr>
-        <td>Featured: </td>
-        <td>
-          <input type="radio" name="featured" value="Yes">Yes&nbsp;
-          <input type="radio" name="featured" value="No">No
-        </td>
-      </tr>
-      <tr>
-        <td>Active: </td>
-        <td>
-          <input type="radio" name="active" value="Yes">Yes&nbsp;
-          <input type="radio" name="active" value="No">No
-        </td>
-      </tr>
-      <tr>
-        <td colspan="2">
-          <input type="submit" name="submit" value="Add Medicine" class="btn btn-info">
-        </td>
-      </tr>
-    </table>
-  </form>
-</div> 
-
 <?php
-  if (isset($_POST['submit'])) {
-    // echo "clicked";
-    $title = $_POST['title'];
-    $description = $_POST['description'];
-    $price = $_POST['price'];
-    $cat_id = $_POST['category'];
+include("../partials/header.php");
 
-    if (isset($_POST['featured'])) {
-      $featured = $_POST['featured'];
-    }
-    else {
-      $featured = "No";
-    }
-    if (isset($_POST['active'])) {
-      $active = $_POST['active'];
-    }
-    else {
-      $active = "No";
-    }
+// Load categories for dropdown
+$sql_cats = "SELECT id, title FROM tbl_category WHERE active='Yes' ORDER BY title ASC";
+$res_cats  = mysqli_query($conn, $sql_cats);
 
-    if(isset($_FILES['image']['name'])){
-      $image_name = $_FILES['image']['name'];
-      if ($image_name != "") {
-        $temp = explode(".", $image_name);
-        $ext = end($temp);
-        $image_name = "Medicine_".rand(000, 999).".".$ext;
+if (isset($_POST['submit'])) {
 
-        $source_path = $_FILES['image']['tmp_name'];
-        $destination_path = "../img/medicine/".$image_name;
+    $title       = trim($_POST['title']);
+    $description = trim($_POST['description']);
+    $price       = floatval($_POST['price']);
+    $cat_id      = intval($_POST['cat_id']);
+    $featured    = $_POST['featured'];
+    $active      = $_POST['active'];
 
-        $upload = move_uploaded_file($source_path, $destination_path);
+    // ---------- IMAGE UPLOAD ----------
+    $image_name = "";
+    $upload_dir = "../img/medicine/";
 
-        if ($upload == False) {
-          $_SESSION['upload'] = "Failed to upload image!";
-          // redirect page to manage admin
-          header("location:". SITEURL .'admin/add-medicine.php');
-          die();
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        $file_type     = mime_content_type($_FILES['image']['tmp_name']);
+        $max_size      = 5 * 1024 * 1024; // 5MB
+
+        if (!in_array($file_type, $allowed_types)) {
+            $_SESSION['med-e'] = "Invalid file type. Only JPG, PNG, GIF, WEBP allowed.";
+            header('location: ' . SITEURL . 'admin/add-medicine.php');
+            exit();
         }
-      }
-      else {
-        $image_name = "";
-      }
+
+        if ($_FILES['image']['size'] > $max_size) {
+            $_SESSION['med-e'] = "File too large. Max 5MB allowed.";
+            header('location: ' . SITEURL . 'admin/add-medicine.php');
+            exit();
+        }
+
+        $ext        = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+        $image_name = "Medicine_" . time() . "_" . rand(100, 999) . "." . strtolower($ext);
+
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
+
+        if (!move_uploaded_file($_FILES['image']['tmp_name'], $upload_dir . $image_name)) {
+            $_SESSION['med-e'] = "Failed to upload image! Check folder permissions on: img/medicine/";
+            header('location: ' . SITEURL . 'admin/add-medicine.php');
+            exit();
+        }
+
+    } elseif (isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
+        $_SESSION['med-e'] = "Image upload error (code: " . $_FILES['image']['error'] . ").";
+        header('location: ' . SITEURL . 'admin/add-medicine.php');
+        exit();
     }
-    else {
-      $image_name = "";
+
+    // ---------- DATABASE INSERT ----------
+    $title_safe   = mysqli_real_escape_string($conn, $title);
+    $desc_safe    = mysqli_real_escape_string($conn, $description);
+    $image_safe   = mysqli_real_escape_string($conn, $image_name);
+    $featured_safe = mysqli_real_escape_string($conn, $featured);
+    $active_safe  = mysqli_real_escape_string($conn, $active);
+
+    $sql = "INSERT INTO tbl_med (title, description, price, image_name, cat_id, featured, active) 
+            VALUES ('$title_safe', '$desc_safe', $price, '$image_safe', $cat_id, '$featured_safe', '$active_safe')";
+
+    $res = mysqli_query($conn, $sql);
+
+    if ($res) {
+        $_SESSION['med-s'] = "Medicine added successfully!";
+        header('location: ' . SITEURL . 'admin/medicines.php');
+        exit();
+    } else {
+        // Rollback: delete uploaded image since DB insert failed
+        if (!empty($image_name) && file_exists($upload_dir . $image_name)) {
+            unlink($upload_dir . $image_name);
+        }
+        $_SESSION['med-e'] = "Database error: " . mysqli_error($conn);
+        header('location: ' . SITEURL . 'admin/add-medicine.php');
+        exit();
     }
-    $sql2 = "INSERT INTO tbl_med SET
-    title='$title',
-    description='$description',
-    price=$price,
-    image_name='$image_name',
-    cat_id=$cat_id,
-    featured='$featured',
-    active='$active'
-    ";
-    $res2 = mysqli_query($conn, $sql2) or die(mysqli_error($conn));
-    if ($res2 == True) {
-      // echo "Data Inserted";
-      // create session variable to display message
-      $_SESSION['add'] = "Medicine added sucessfully!";
-      // redirect page to manage medicine
-      header("location:". SITEURL .'admin/manage-medicine.php');
-    } 
-    else {
-      // echo "Failed to insert data";
-      // create session variable to display message
-      $_SESSION['add'] = "Failed to add Medicine!";
-      // redirect page to add medicine
-      header("location:" . SITEURL . 'admin/add-medicine.php');
-    }
-  }
+}
 ?>
 
-<?php include("./partials/footer.php"); ?>
+<div class="main-content">
+    <h2>Add New Medicine</h2>
+
+    <?php if (isset($_SESSION['med-e'])): ?>
+        <div class="red-msg" style="padding:10px; margin-bottom:15px;">
+            <?php echo $_SESSION['med-e']; unset($_SESSION['med-e']); ?>
+        </div>
+    <?php endif; ?>
+
+    <form action="<?php echo SITEURL; ?>admin/add-medicine.php" method="POST" enctype="multipart/form-data">
+        <table class="tbl-full">
+            <tr>
+                <td><label>Medicine Name *</label></td>
+                <td><input type="text" name="title" class="input-responsive" required placeholder="e.g. Paracetamol 500mg"></td>
+            </tr>
+            <tr>
+                <td><label>Description</label></td>
+                <td><textarea name="description" class="input-responsive" rows="4" placeholder="Medicine description..."></textarea></td>
+            </tr>
+            <tr>
+                <td><label>Price (Rs.) *</label></td>
+                <td><input type="number" name="price" class="input-responsive" step="0.01" min="0" required placeholder="0.00"></td>
+            </tr>
+            <tr>
+                <td><label>Category *</label></td>
+                <td>
+                    <select name="cat_id" class="input-responsive" required>
+                        <option value="">-- Select Category --</option>
+                        <?php
+                        if ($res_cats && mysqli_num_rows($res_cats) > 0) {
+                            while ($cat = mysqli_fetch_assoc($res_cats)) {
+                                echo "<option value='" . $cat['id'] . "'>" . htmlspecialchars($cat['title']) . "</option>";
+                            }
+                        }
+                        ?>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td><label>Medicine Image</label></td>
+                <td>
+                    <input type="file" name="image" accept="image/*">
+                    <small style="color:gray;">Optional. Max 5MB. JPG/PNG/GIF/WEBP.</small>
+                </td>
+            </tr>
+            <tr>
+                <td><label>Featured</label></td>
+                <td>
+                    <select name="featured" class="input-responsive">
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td><label>Active</label></td>
+                <td>
+                    <select name="active" class="input-responsive">
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <input type="submit" name="submit" value="Add Medicine" class="btn btn-success">
+                    <a href="<?php echo SITEURL; ?>admin/medicines.php" class="btn btn-secondary">Cancel</a>
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+<?php include("../partials/footer.php"); ?>

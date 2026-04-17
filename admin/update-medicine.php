@@ -1,234 +1,219 @@
-<?php include("./partials/navbar.php"); ?>
+<?php
+include("../partials/header.php");
 
-<div class="red-msg">
-  <?php
-    if (isset($_SESSION['update'])){
-      echo $_SESSION['update'];
-      unset($_SESSION['update']);
-    } 
-  ?>
-</div>
+// ---------- LOAD EXISTING MEDICINE ----------
+if (!isset($_GET['id'])) {
+    header('location: ' . SITEURL . 'admin/medicines.php');
+    exit();
+}
 
-<div class="red-msg">
-  <?php
-    if (isset($_SESSION['remove'])){
-      echo $_SESSION['remove'];
-      unset($_SESSION['remove']);
-    } 
-  ?>
-</div>
+$id = intval($_GET['id']);
 
-<div class="red-msg">
-  <?php
-  if (isset($_SESSION['upload'])) {
-    echo $_SESSION['upload'];
-    unset($_SESSION['upload']);
-  }
-  ?>
-</div>
+$sql_fetch = "SELECT * FROM tbl_med WHERE id = $id";
+$res_fetch  = mysqli_query($conn, $sql_fetch);
 
-<div class="main-content">
-  <center>
-    <h2>Update Medicine</h2>
-  </center>
-  <?php
-  if (isset($_GET['id'])) {
-    $id = $_GET['id'];
-    $sql = "SELECT * FROM tbl_med WHERE id=$id";
-    $res = mysqli_query($conn, $sql);
-    if ($res == True) {
-      $count = mysqli_num_rows($res);
-      if ($count == 1) {
-        // echo "Medicine available";
-        $row = mysqli_fetch_assoc($res);
-        $title = $row['title'];
-        $description = $row['description'];
-        $price = $row['price'];
-        $current_image = $row['image_name'];
-        $cat_id = $row['cat_id'];
-        $featured = $row['featured'];
-        $active = $row['active'];
-      } else {
-        header('location:' . SITEURL . 'admin/manage-medicine.php');
-      }
-    }
-  } else {
-    header('location:' . SITEURL . 'admin/manage-medicine.php');
-  }
-  ?>
-  <form action="" method="POST" enctype="multipart/form-data">
-    <table class="tbl-45">
-    <tr>
-        <td>Title: </td>
-        <td><input type="text" name="title" value="<?php echo $title; ?>"></td>
-      </tr>
-      <tr>
-        <td>Description: </td>
-        <td>
-          <textarea name="description" cols="30" rows="5" placeholder="<?php echo $description; ?>"></textarea>
-        </td>
-      </tr>
-      <tr>
-        <td>Price: </td>
-        <td><input type="number" name="price" value="<?php echo $price; ?>"></td>
-      </tr>
-      <tr>
-        <td>Category: </td>
-        <td>
-          <select name="category">
-            <?php
-              $sql2 = "SELECT * FROM tbl_category WHERE active='Yes'";
-              $res2 = mysqli_query($conn, $sql2);
-              $count = mysqli_num_rows($res2);
-              if ($count > 0) {
-                while ($row = mysqli_fetch_assoc($res2))
-                {
-                  $id_c = $row['id'];
-                  $title_c = $row['title'];
-                  ?>
-                  <option value="<?php echo $id_c ?>" <?php if($id_c == $cat_id){ echo "selected"; } ?>><?php echo $title_c ?></option>
-                  <?php
-                }
-              }
-              else{
-                ?>
-                <option value="0">No category Found</option>
-                <?php
-              }
-            ?>
-          </select>
-        </td>
-      </tr>
-      <tr>
-        <td>Current Image:</td>
-        <td>
-          <?php 
-            if ($current_image != "") {
-              ?>
-              <img src="../img/medicine/<?php echo $current_image; ?>" alt="Current Image" width="100px">
-              <?php
-            }
-            else{
-              echo "Image not Added";
-            }
-          ?>
-        </td>
-      </tr>
-      <tr>
-        <td>Select Image:</td>
-        <td><input type="file" name="image"></td>
-      </tr>
-      <tr>
-        <td>Featured: </td>
-        <td>
-            <input type="radio" name="featured" value="Yes" <?php if ($featured == "Yes"){echo "checked";} ?> >Yes&nbsp;
-            <input type="radio" name="featured" value="No" <?php if ($featured == "No"){echo "checked";} ?> >No
-        </td>
-      </tr>
-      <tr>
-        <td>Active: </td>
-        <td>
-          <input type="radio" name="active" value="Yes" <?php if ($active == "Yes"){echo "checked";} ?> >Yes&nbsp;
-          <input type="radio" name="active" value="No" <?php if ($active == "No"){echo "checked";} ?> >No
-        </td>
-      </tr>
-      <tr>
-        <td colspan="2">
-          <input type="hidden" name="id" value="<?php echo $id; ?>">
-          <input type="hidden" name="current_image" value="<?php echo $current_image; ?>">
-          <input type="submit" name="submit" value="Update Medicine" class="btn btn-info">
-        </td>
-      </tr>
-    </table>
-  </form>
-</div>
+if (!$res_fetch || mysqli_num_rows($res_fetch) !== 1) {
+    $_SESSION['med-e'] = "Medicine not found.";
+    header('location: ' . SITEURL . 'admin/medicines.php');
+    exit();
+}
 
-<?php 
-  if (isset($_POST['submit'])) {
-    // echo "button clicked";
-    $id = $_POST['id'];
-    $current_image = $_POST['current_image'];
-    $title = $_POST['title'];
-    $description = $_POST['description'];
-    $price = isset($_POST['price']) && $_POST['price'] !== "" ? $_POST['price'] : 0;
-    if($price == ""){
-      $price = 0;
-    }
-    $cat_id = $_POST['category'];
-    if (isset($_POST['featured'])) {
-      $featured = $_POST['featured'];
-    }
-    else {
-      $featured = "No";
-    }
-    if (isset($_POST['active'])) {
-      $active = $_POST['active'];
-    }
-    else {
-      $active = "No";
-    } 
+$medicine       = mysqli_fetch_assoc($res_fetch);
+$old_image_name = $medicine['image_name'];
 
-    if(isset($_FILES['image']['name'])){
-      $image_name = $_FILES['image']['name'];
+// Load categories for dropdown
+$sql_cats = "SELECT id, title FROM tbl_category WHERE active='Yes' ORDER BY title ASC";
+$res_cats  = mysqli_query($conn, $sql_cats);
 
-      if ($image_name != "") {
-        $temp = explode(".", $image_name);
-        $ext = end($temp);
-        $image_name = "Med_".rand(000, 999).".".$ext;
+// ---------- PROCESS FORM SUBMIT ----------
+if (isset($_POST['submit'])) {
 
-        $source_path = $_FILES['image']['tmp_name'];
-        $destination_path = "../img/medicine/".$image_name;
+    $title       = trim($_POST['title']);
+    $description = trim($_POST['description']);
+    $price       = floatval($_POST['price']);
+    $cat_id      = intval($_POST['cat_id']);
+    $featured    = $_POST['featured'];
+    $active      = $_POST['active'];
 
-        $upload = move_uploaded_file($source_path, $destination_path);
+    $upload_dir    = "../img/medicine/";
+    $new_image     = $old_image_name; // default: keep existing
+    $image_changed = false;
 
-        if ($upload == False) {
-          $_SESSION['upload'] = "Failed to upload image!";
-          header("location:". SITEURL .'admin/update-medicine.php');
-          die();
+    // ---------- CHECK IF NEW IMAGE WAS UPLOADED ----------
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+        $file_type     = mime_content_type($_FILES['image']['tmp_name']);
+        $max_size      = 5 * 1024 * 1024;
+
+        if (!in_array($file_type, $allowed_types)) {
+            $_SESSION['med-e'] = "Invalid file type. Only JPG, PNG, GIF, WEBP allowed.";
+            header('location: ' . SITEURL . 'admin/update-medicine.php?id=' . $id);
+            exit();
         }
-        
-      }
-      else {
-        $image_name = $current_image;
-      }
-    }
-    else {
-      $image_name = $current_image;
-    }
 
-    $sql3 = "UPDATE tbl_med SET
-    title='$title',
-    description='$description',
-    price=$price,
-    image_name='$image_name',
-    cat_id=$cat_id,
-    featured='$featured',
-    active='$active'
-    WHERE id=$id
-    ";
+        if ($_FILES['image']['size'] > $max_size) {
+            $_SESSION['med-e'] = "File too large. Max 5MB allowed.";
+            header('location: ' . SITEURL . 'admin/update-medicine.php?id=' . $id);
+            exit();
+        }
 
+        $ext       = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+        $new_image = "Medicine_" . time() . "_" . rand(100, 999) . "." . strtolower($ext);
 
-  $res3 = mysqli_query($conn, $sql3) or die(mysqli_error($conn));
-  if ($res3 == True) {
-    
+        if (!is_dir($upload_dir)) {
+            mkdir($upload_dir, 0755, true);
+        }
 
-    // ✅ Old image delete AFTER DB success
-    if ($current_image != "" && $image_name != $current_image) {
-      $remove_path = "../img/medicine/".$current_image;
-      unlink($remove_path);
+        if (!move_uploaded_file($_FILES['image']['tmp_name'], $upload_dir . $new_image)) {
+            $_SESSION['med-e'] = "Failed to upload new image! Check folder permissions.";
+            header('location: ' . SITEURL . 'admin/update-medicine.php?id=' . $id);
+            exit();
+        }
+
+        $image_changed = true;
     }
 
-    // create session variable to display message
-    $_SESSION['update'] = "Medicine updated sucessfully!";
-    // redirect page to manage medicine
-    header("location:" . SITEURL . 'admin/manage-medicine.php');
-  } else {
-    // create session variable to display message
-    $_SESSION['update'] = "Failed to update Medicine!";
-    // redirect page to add medicine
-    header("location:" . SITEURL . 'admin/update-medicine.php');
-  }
-  }
+    // ---------- UPDATE DATABASE ----------
+    $title_safe    = mysqli_real_escape_string($conn, $title);
+    $desc_safe     = mysqli_real_escape_string($conn, $description);
+    $image_safe    = mysqli_real_escape_string($conn, $new_image);
+    $featured_safe = mysqli_real_escape_string($conn, $featured);
+    $active_safe   = mysqli_real_escape_string($conn, $active);
+
+    $sql_update = "UPDATE tbl_med 
+                   SET title='$title_safe', description='$desc_safe', price=$price,
+                       image_name='$image_safe', cat_id=$cat_id, 
+                       featured='$featured_safe', active='$active_safe'
+                   WHERE id=$id";
+
+    $res_update = mysqli_query($conn, $sql_update);
+
+    if ($res_update) {
+        // DB updated — now safely delete old image if a new one replaced it
+        if ($image_changed && !empty($old_image_name)) {
+            $old_path = $upload_dir . $old_image_name;
+            if (file_exists($old_path)) {
+                unlink($old_path);
+                // Silent fail is fine — DB is already updated
+            }
+        }
+
+        $_SESSION['med-s'] = "Medicine updated successfully!";
+        header('location: ' . SITEURL . 'admin/medicines.php');
+        exit();
+
+    } else {
+        // DB failed — rollback: delete newly uploaded image
+        if ($image_changed && !empty($new_image) && file_exists($upload_dir . $new_image)) {
+            unlink($upload_dir . $new_image);
+        }
+        $_SESSION['med-e'] = "Database update failed: " . mysqli_error($conn);
+        header('location: ' . SITEURL . 'admin/update-medicine.php?id=' . $id);
+        exit();
+    }
+}
 ?>
 
-<?php include("./partials/footer.php"); ?>
+<div class="main-content">
+    <h2>Update Medicine</h2>
+
+    <?php if (isset($_SESSION['med-e'])): ?>
+        <div class="red-msg" style="padding:10px; margin-bottom:15px;">
+            <?php echo $_SESSION['med-e']; unset($_SESSION['med-e']); ?>
+        </div>
+    <?php endif; ?>
+
+    <form action="<?php echo SITEURL; ?>admin/update-medicine.php?id=<?php echo $id; ?>" method="POST" enctype="multipart/form-data">
+        <table class="tbl-full">
+            <tr>
+                <td><label>Medicine Name *</label></td>
+                <td>
+                    <input type="text" name="title" class="input-responsive" required
+                           value="<?php echo htmlspecialchars($medicine['title']); ?>">
+                </td>
+            </tr>
+            <tr>
+                <td><label>Description</label></td>
+                <td>
+                    <textarea name="description" class="input-responsive" rows="4">
+                        <?php echo htmlspecialchars($medicine['description']); ?>
+                    </textarea>
+                </td>
+            </tr>
+            <tr>
+                <td><label>Price (Rs.) *</label></td>
+                <td>
+                    <input type="number" name="price" class="input-responsive" step="0.01" min="0" required
+                           value="<?php echo $medicine['price']; ?>">
+                </td>
+            </tr>
+            <tr>
+                <td><label>Category *</label></td>
+                <td>
+                    <select name="cat_id" class="input-responsive" required>
+                        <option value="">-- Select Category --</option>
+                        <?php
+                        if ($res_cats && mysqli_num_rows($res_cats) > 0) {
+                            while ($cat = mysqli_fetch_assoc($res_cats)) {
+                                $selected = ($cat['id'] == $medicine['cat_id']) ? 'selected' : '';
+                                echo "<option value='" . $cat['id'] . "' $selected>" . htmlspecialchars($cat['title']) . "</option>";
+                            }
+                        }
+                        ?>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td><label>Current Image</label></td>
+                <td>
+                    <?php if (!empty($medicine['image_name'])): ?>
+                        <?php $img_path = "../img/medicine/" . $medicine['image_name']; ?>
+                        <?php if (file_exists($img_path)): ?>
+                            <img src="<?php echo SITEURL; ?>img/medicine/<?php echo $medicine['image_name']; ?>"
+                                 style="width:80px; height:80px; object-fit:cover; border:1px solid #ccc;">
+                            <br><small><?php echo $medicine['image_name']; ?></small>
+                        <?php else: ?>
+                            <span style="color:red;">Image file missing from disk: <?php echo $medicine['image_name']; ?></span>
+                        <?php endif; ?>
+                    <?php else: ?>
+                        <span style="color:gray;">No image set</span>
+                    <?php endif; ?>
+                </td>
+            </tr>
+            <tr>
+                <td><label>Replace Image</label></td>
+                <td>
+                    <input type="file" name="image" accept="image/*">
+                    <small style="color:gray;">Leave blank to keep current image. Max 5MB.</small>
+                </td>
+            </tr>
+            <tr>
+                <td><label>Featured</label></td>
+                <td>
+                    <select name="featured" class="input-responsive">
+                        <option value="Yes" <?php echo ($medicine['featured'] == 'Yes') ? 'selected' : ''; ?>>Yes</option>
+                        <option value="No"  <?php echo ($medicine['featured'] == 'No')  ? 'selected' : ''; ?>>No</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td><label>Active</label></td>
+                <td>
+                    <select name="active" class="input-responsive">
+                        <option value="Yes" <?php echo ($medicine['active'] == 'Yes') ? 'selected' : ''; ?>>Yes</option>
+                        <option value="No"  <?php echo ($medicine['active'] == 'No')  ? 'selected' : ''; ?>>No</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <input type="submit" name="submit" value="Update Medicine" class="btn btn-success">
+                    <a href="<?php echo SITEURL; ?>admin/medicines.php" class="btn btn-secondary">Cancel</a>
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+
+<?php include("../partials/footer.php"); ?>
