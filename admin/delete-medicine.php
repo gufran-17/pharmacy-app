@@ -1,5 +1,4 @@
 <?php
-include("./partials/login-check.php");
 include("./partials/navbar.php");
 
 if (!isset($_POST['id'])) {
@@ -22,28 +21,26 @@ if (!$res_fetch || mysqli_num_rows($res_fetch) !== 1) {
 $row        = mysqli_fetch_assoc($res_fetch);
 $image_name = $row['image_name'];
 
-// Step 2: Delete from DB FIRST — always
+// Step 2: Delete from DB FIRST
 $sql_delete = "DELETE FROM tbl_med WHERE id = $id";
 $res_delete = mysqli_query($conn, $sql_delete);
 
 if ($res_delete) {
-    // Step 3: Attempt file deletion — best effort, never block on failure
+
+    // Step 3: Delete image (best effort)
     if (!empty($image_name)) {
         $file_path = "../img/medicine/" . $image_name;
 
         if (file_exists($file_path)) {
             if (!unlink($file_path)) {
-                error_log("[Pharmacy] Could not delete medicine image: " . realpath($file_path));
+                error_log("Could not delete image: " . $file_path);
             }
-        } else {
-            error_log("[Pharmacy] Medicine image not on disk (already missing): " . $file_path);
         }
     }
 
     $_SESSION['med-s'] = "Medicine deleted successfully!";
-
 } else {
-    $_SESSION['med-e'] = "Failed to delete medicine from database: " . mysqli_error($conn);
+    $_SESSION['med-e'] = "Failed to delete medicine: " . mysqli_error($conn);
 }
 
 header('location: ' . SITEURL . 'admin/medicines.php');
